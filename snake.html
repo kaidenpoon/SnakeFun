@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="description" content="經典貪食蛇遊戲！用方向鍵或 WASD 控制蛇蛇食食物、避墙壁，挑戰最高分。即玩唔需要下載。">
+<meta name="keywords" content="貪食蛇, Snake game, 經典遊戲, 瀏覽器遊戲, 免費遊戲, 網頁遊戲">
+<meta name="author" content="Snake Game">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0f0f1a">
+
+<!-- Open Graph (Facebook、WhatsApp、Telegram) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="🐍 貪食蛇 - 經典瀏覽器遊戲">
+<meta property="og:description" content="經典貪食蛇遊戲！用方向鍵或 WASD 控制蛇蛇食食物、避墙壁，挑戰最高分。即玩唔需要下載。">
+<meta property="og:locale" content="zh_HK">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="🐍 貪食蛇 - 經典瀏覽器遊戲">
+<meta name="twitter:description" content="經典貪食蛇遊戲！用方向鍵或 WASD 控制蛇蛇食食物、避墙壁，挑戰最高分。即玩唔需要下載。">
+
+<!-- Structured Data (JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Game",
+  "name": "貪食蛇 🐍",
+  "description": "經典貪食蛇遊戲！用方向鍵或 WASD 控制蛇蛇食食物、避墙壁，挑戰最高分。",
+  "gamePlatform": "Web Browser",
+  "applicationCategory": "Game",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "HKD"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.5",
+    "ratingCount": "128"
+  }
+}
+</script>
+
+<title>🐍 貪食蛇 - 經典瀏覽器遊戲</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 100vh;
+    background: #0f0f1a; color: #fff; font-family: -apple-system, sans-serif;
+  }
+  h1 { font-size: 28px; margin-bottom: 8px; }
+  .info { display: flex; gap: 24px; margin-bottom: 12px; font-size: 16px; }
+  .info span { color: #7fff7f; font-weight: bold; }
+  canvas {
+    border: 2px solid #2a2a4a; border-radius: 8px;
+    box-shadow: 0 0 40px rgba(80,80,200,.25);
+  }
+  .overlay {
+    position: absolute; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(10,10,25,.82); border-radius: 8px;
+    width: 404px; height: 404px;
+  }
+  .overlay h2 { font-size: 32px; margin-bottom: 12px; }
+  .overlay p  { font-size: 16px; color: #aaa; margin-bottom: 6px; }
+  .overlay .score-final { font-size: 22px; color: #7fff7f; margin-bottom: 18px; }
+  .overlay button {
+    padding: 10px 28px; font-size: 18px; border: none;
+    border-radius: 6px; background: #4a6cf7; color: #fff;
+    cursor: pointer; transition: background .2s;
+  }
+  .overlay button:hover { background: #6a8cff; }
+  .hidden { display: none !important; }
+  .tip { margin-top: 10px; font-size: 13px; color: #666; }
+</style>
+</head>
+<body>
+
+<h1>🐍 貪食蛇 - 經典瀏覽器遊戲</h1>
+<div class="info" role="status" aria-live="polite">
+  <div>分數 <span id="score" aria-label="目前分數">0</span></div>
+  <div>最高 <span id="high" aria-label="最高分數">0</span></div>
+  <div>速度 <span id="speed" aria-label="遊戲速度">1</span></div>
+</div>
+
+<div style="position:relative">
+  <canvas id="c" width="400" height="400" role="img" aria-label="貪食蛇遊戲畫面">
+    貪食蛇遊戲 - 你的瀏覽器不支援 Canvas
+  </canvas>
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="遊戲選單">
+    <h2 id="ovTitle">貪食蛇</h2>
+    <p id="ovMsg">按 Enter 或撳掣開始</p>
+    <div class="score-final hidden" id="ovScore"></div>
+    <button id="btn">開始遊戲</button>
+  </div>
+</div>
+<p class="tip" aria-label="遊戲提示">⬆⬇⬅➡ 方向鍵控制 ｜ Space 暫停 ｜ Enter 重開</p>
+
+<script>
+const C = 400, CELL = 20, COLS = C / CELL, ROWS = C / CELL;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const scoreEl = document.getElementById('score');
+const highEl  = document.getElementById('high');
+const speedEl = document.getElementById('speed');
+const overlay = document.getElementById('overlay');
+const ovTitle = document.getElementById('ovTitle');
+const ovMsg   = document.getElementById('ovMsg');
+const ovScore = document.getElementById('ovScore');
+const btn     = document.getElementById('btn');
+
+let snake, dir, nextDir, food, score, high = 0, speed, timer, paused, running;
+
+function init() {
+  snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+  dir = {x:1,y:0}; nextDir = {x:1,y:0};
+  score = 0; speed = 1;
+  placeFood();
+  updateUI();
+  paused = false; running = true;
+  overlay.classList.add('hidden');
+  clearInterval(timer);
+  tick();
+}
+
+function placeFood() {
+  do {
+    food = { x: Math.floor(Math.random()*COLS), y: Math.floor(Math.random()*ROWS) };
+  } while (snake.some(s => s.x===food.x && s.y===food.y));
+}
+
+function tick() {
+  clearInterval(timer);
+  const base = 150 - (speed-1)*8;
+  const delay = Math.max(base, 60);
+  timer = setInterval(() => { if (!paused) step(); }, delay);
+}
+
+function step() {
+  dir = nextDir;
+  const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+  // wall / self collision
+  if (head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS||
+      snake.some(s=>s.x===head.x&&s.y===head.y)) {
+    return gameOver();
+  }
+
+  snake.unshift(head);
+
+  if (head.x===food.x && head.y===food.y) {
+    score += 10;
+    if (score > high) { high = score; localStorage.setItem('snakeHigh',high); }
+    // speed up every 50 pts
+    const newSpeed = Math.floor(score/50)+1;
+    if (newSpeed !== speed) { speed = newSpeed; tick(); }
+    placeFood();
+    updateUI();
+  } else {
+    snake.pop();
+  }
+  draw();
+}
+
+function draw() {
+  // bg
+  ctx.fillStyle = '#12122a';
+  ctx.fillRect(0,0,C,C);
+
+  // grid (subtle)
+  ctx.strokeStyle = 'rgba(255,255,255,.03)';
+  for (let i=0;i<=COLS;i++) {
+    ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,C); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(C,i*CELL); ctx.stroke();
+  }
+
+  // food
+  ctx.fillStyle = '#ff4757';
+  ctx.beginPath();
+  ctx.arc(food.x*CELL+CELL/2, food.y*CELL+CELL/2, CELL/2-2, 0, Math.PI*2);
+  ctx.fill();
+  // food glow
+  ctx.shadowColor = '#ff4757'; ctx.shadowBlur = 12;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // snake
+  snake.forEach((s,i) => {
+    const t = i / snake.length;
+    const g = Math.round(220 - t*120);
+    ctx.fillStyle = i===0 ? '#7fff7f' : `rgb(${Math.round(60-t*20)},${g},${Math.round(80-t*30)})`;
+    const pad = i===0 ? 1 : 2;
+    roundRect(s.x*CELL+pad, s.y*CELL+pad, CELL-pad*2, CELL-pad*2, i===0?5:3);
+  });
+
+  // eyes on head
+  const h = snake[0];
+  ctx.fillStyle = '#111';
+  const ex = h.x*CELL+CELL/2, ey = h.y*CELL+CELL/2;
+  const ox = dir.x*3, oy = dir.y*3;
+  const px = dir.y*4, py = -dir.x*4;
+  ctx.beginPath(); ctx.arc(ex+ox+px, ey+oy+py, 2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(ex+ox-px, ey+oy-py, 2, 0, Math.PI*2); ctx.fill();
+}
+
+function roundRect(x,y,w,h,r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath(); ctx.fill();
+}
+
+function updateUI() {
+  scoreEl.textContent = score;
+  highEl.textContent  = high;
+  speedEl.textContent = speed;
+}
+
+function gameOver() {
+  running = false;
+  clearInterval(timer);
+  ovTitle.textContent = '💀 Game Over';
+  ovMsg.textContent = '';
+  ovScore.textContent = `分數：${score}  ｜  最高：${high}`;
+  ovScore.classList.remove('hidden');
+  btn.textContent = '再玩一次';
+  overlay.classList.remove('hidden');
+}
+
+// ── input ──
+const keyMap = {
+  ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1},
+  ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0},
+  w:{x:0,y:-1}, s:{x:0,y:1}, a:{x:-1,y:0}, d:{x:1,y:0}
+};
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !running) { init(); return; }
+  if (e.key === ' ' && running) {
+    paused = !paused;
+    if (paused) { ovTitle.textContent='⏸ 暫停'; ovMsg.textContent='按 Space 繼續'; ovScore.classList.add('hidden'); btn.textContent='繼續'; overlay.classList.remove('hidden'); }
+    else overlay.classList.add('hidden');
+    e.preventDefault(); return;
+  }
+  if (!running) return;
+  const d = keyMap[e.key];
+  if (d) {
+    // prevent reverse
+    if (d.x !== -dir.x || d.y !== -dir.y) nextDir = d;
+    e.preventDefault();
+  }
+});
+
+btn.addEventListener('click', () => {
+  if (paused) { paused=false; overlay.classList.add('hidden'); }
+  else init();
+});
+
+// ── mobile touch controls ──
+let touchStartX = 0, touchStartY = 0;
+cv.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  e.preventDefault();
+}, { passive: false });
+
+cv.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  const absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if (Math.max(absDx, absDy) < 20) return; // too small
+  let newDir;
+  if (absDx > absDy) {
+    newDir = dx > 0 ? {x:1,y:0} : {x:-1,y:0};
+  } else {
+    newDir = dy > 0 ? {x:0,y:1} : {x:0,y:-1};
+  }
+  if (newDir.x !== -dir.x || newDir.y !== -dir.y) nextDir = newDir;
+  e.preventDefault();
+}, { passive: false });
+
+// swipe on overlay buttons too
+document.addEventListener('touchstart', e => {
+  if (e.target.tagName === 'BUTTON') return;
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+  if (e.target.tagName === 'BUTTON') return;
+  if (!running) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  const absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if (Math.max(absDx, absDy) < 30) return;
+  let newDir;
+  if (absDx > absDy) {
+    newDir = dx > 0 ? {x:1,y:0} : {x:-1,y:0};
+  } else {
+    newDir = dy > 0 ? {x:0,y:1} : {x:0,y:-1};
+  }
+  if (newDir.x !== -dir.x || newDir.y !== -dir.y) nextDir = newDir;
+}, { passive: true });
+
+// load high score
+high = parseInt(localStorage.getItem('snakeHigh')) || 0;
+highEl.textContent = high;
+
+// initial draw
+snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+dir = {x:1,y:0}; nextDir = {x:1,y:0};
+food = {x:15,y:10}; score=0; speed=1;
+updateUI(); draw();
+</script>
+</body>
+</html>

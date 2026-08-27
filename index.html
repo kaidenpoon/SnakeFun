@@ -3,17 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<!-- ═══ SEO ═══ -->
+<!-- 基本 Meta -->
 <meta name="description" content="經典貪食蛇遊戲！用方向鍵或 WASD 控制蛇蛇食食物、避墙壁，挑戰最高分。即玩唔需要下載。">
 <meta name="keywords" content="貪食蛇, Snake game, 經典遊戲, 瀏覽器遊戲, 免費遊戲, 網頁遊戲">
 <meta name="author" content="Snake Game">
 <meta name="robots" content="index, follow">
 <meta name="theme-color" content="#0f0f1a">
+<!-- 搜尋引擎驗證（請替換成你自己的驗證碼）：
+     Google: https://search.google.com/search-console 取得 HTML 標籤驗證碼
+     Bing:   https://www.bing.com/webmasters 取得驗證碼（Yahoo 亦使用 Bing 索引，故無需另外設定）
+     Baidu:  https://ziyuan.baidu.com 驗證網站權限後取得驗證碼 -->
+<meta name="google-site-verification" content="YOUR_GOOGLE_VERIFICATION_CODE">
+<meta name="msvalidate.01" content="YOUR_BING_VERIFICATION_CODE">
+<meta name="baidu-site-verification" content="YOUR_BAIDU_VERIFICATION_CODE">
+<!-- Canonical（請替換成你的真實域名） -->
+<link rel="canonical" href="https://YOUR-DOMAIN.com/">
+<!-- 多語言 hreflang -->
+<link rel="alternate" hreflang="zh-Hant" href="https://YOUR-DOMAIN.com/?lang=zh-Hant">
+<link rel="alternate" hreflang="en" href="https://YOUR-DOMAIN.com/?lang=en">
+<link rel="alternate" hreflang="ja" href="https://YOUR-DOMAIN.com/?lang=ja">
+<link rel="alternate" hreflang="ko" href="https://YOUR-DOMAIN.com/?lang=ko">
+<link rel="alternate" hreflang="x-default" href="https://YOUR-DOMAIN.com/">
 
 <!-- Open Graph (Facebook、WhatsApp、Telegram) -->
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://YOUR-DOMAIN.com/">
+<meta property="og:site_name" content="Snake Game">
 <meta property="og:title" content="🐍 貪食蛇 - 經典瀏覽器遊戲">
 <meta property="og:description" content="經典貪食蛇遊戲！用方向鍵或 WASD 控制蛇蛇食食物、避墙壁，挑戰最高分。即玩唔需要下載。">
 <meta property="og:locale" content="zh_HK">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="ko_KR">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary">
@@ -27,6 +49,8 @@
   "@type": "Game",
   "name": "貪食蛇 🐍",
   "description": "經典貪食蛇遊戲！用方向鍵或 WASD 控制蛇蛇食食物、避墙壁，挑戰最高分。",
+  "url": "https://YOUR-DOMAIN.com/",
+  "inLanguage": ["zh-Hant", "en", "ja", "ko"],
   "gamePlatform": "Web Browser",
   "applicationCategory": "Game",
   "operatingSystem": "Any",
@@ -51,15 +75,29 @@
     justify-content: center; min-height: 100vh;
     background: #0f0f1a; color: #fff; font-family: -apple-system, sans-serif;
   }
-  h1 { font-size: 28px; margin-bottom: 8px; }
+  h1 { font-size: 28px; margin-bottom: 8px; text-align: center; }
   .info { display: flex; gap: 24px; margin-bottom: 12px; font-size: 16px; }
-  .info span { color: #7fff7f; font-weight: bold; }
+  .info span:not([data-i18n]) { color: #7fff7f; font-weight: bold; }
   canvas {
     border: 2px solid #2a2a4a; border-radius: 8px;
     box-shadow: 0 0 40px rgba(80,80,200,.25);
   }
+  /* 頂部控制列：語言切換 / 設定 / 音效 */
+  .controls { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; width: 404px; }
+  .controls select {
+    flex: 1; padding: 6px 8px; font-size: 14px; color: #fff;
+    background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 6px;
+    outline: none; cursor: pointer;
+  }
+  .controls select option { background: #1a1a30; }
+  .btn-settings {
+    padding: 6px 12px; font-size: 14px; color: #fff;
+    background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 6px;
+    cursor: pointer; transition: background .2s;
+  }
+  .btn-settings:hover { background: #3a3a5a; }
   .overlay {
-    position: absolute; display: flex; flex-direction: column;
+    position: absolute; top: 0; left: 0; display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     background: rgba(10,10,25,.82); border-radius: 8px;
     width: 404px; height: 404px;
@@ -75,15 +113,65 @@
   .overlay button:hover { background: #6a8cff; }
   .hidden { display: none !important; }
   .tip { margin-top: 10px; font-size: 13px; color: #666; }
+
+  /* 設定面板 */
+  .modal {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(10,10,25,.7);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-box {
+    background: #181833; border: 1px solid #2a2a4a; border-radius: 12px;
+    padding: 20px; width: min(360px, 90vw); max-height: 85vh; overflow: auto;
+  }
+  .modal-box h3 { margin-bottom: 16px; font-size: 20px; }
+  .set-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .set-row > span { font-size: 14px; color: #ccc; white-space: nowrap; }
+  .theme-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .theme-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid transparent; cursor: pointer; padding: 0;
+  }
+  .theme-btn.active { border-color: #fff; }
+  .theme-btn:hover { transform: scale(1.1); }
+  .colors-block { margin-bottom: 14px; }
+  .colors-block > span { font-size: 14px; color: #ccc; display: block; margin-bottom: 8px; }
+  .color-pickers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .color-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    font-size: 13px; color: #ccc;
+  }
+  input[type="color"] {
+    width: 36px; height: 28px; border: 1px solid #3a3a5a; border-radius: 4px;
+    background: none; cursor: pointer; padding: 0;
+  }
+  .modal-actions { text-align: right; }
+  .btn-primary {
+    padding: 8px 22px; font-size: 15px; border: none; border-radius: 6px;
+    background: #4a6cf7; color: #fff; cursor: pointer; transition: background .2s;
+  }
+  .btn-primary:hover { background: #6a8cff; }
 </style>
 </head>
 <body>
 
-<h1>🐍 貪食蛇 - 經典瀏覽器遊戲</h1>
+<h1 data-i18n="h1">🐍 貪食蛇 - 經典瀏覽器遊戲</h1>
+
+<div class="controls">
+  <select id="langSelect" aria-label="Language">
+    <option value="zh-Hant">繁體中文</option>
+    <option value="en">English</option>
+    <option value="ja">日本語</option>
+    <option value="ko">한국어</option>
+  </select>
+  <button class="btn-settings" id="settingsBtn" type="button">⚙️ <span data-i18n="settingsBtn">設定</span></button>
+  <button class="btn-settings" id="soundBtn" type="button" aria-label="Sound">🔊</button>
+</div>
+
 <div class="info" role="status" aria-live="polite">
-  <div>分數 <span id="score" aria-label="目前分數">0</span></div>
-  <div>最高 <span id="high" aria-label="最高分數">0</span></div>
-  <div>速度 <span id="speed" aria-label="遊戲速度">1</span></div>
+  <div><span data-i18n="scoreLabel">分數</span> <span id="score" aria-label="目前分數">0</span></div>
+  <div><span data-i18n="highLabel">最高</span> <span id="high" aria-label="最高分數">0</span></div>
+  <div><span data-i18n="speedLabel">速度</span> <span id="speed" aria-label="遊戲速度">1</span></div>
 </div>
 
 <div style="position:relative">
@@ -97,9 +185,33 @@
     <button id="btn">開始遊戲</button>
   </div>
 </div>
-<p class="tip" aria-label="遊戲提示">⬆⬇⬅➡ 方向鍵控制 ｜ Space 暫停 ｜ Enter 重開</p>
+<p class="tip" data-i18n="tip">⬆⬇⬅➡ 方向鍵控制 ｜ Space 暫停 ｜ Enter 重開</p>
+
+<!-- 設定面板 -->
+<div class="modal hidden" id="settingsModal" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="modal-box">
+    <h3 data-i18n="settingsTitle">設定</h3>
+    <div class="set-row">
+      <span data-i18n="themeLabel">主題</span>
+      <div class="theme-btns" id="themeBtns"></div>
+    </div>
+    <div class="colors-block">
+      <span data-i18n="colorsLabel">顏色</span>
+      <div class="color-pickers">
+        <label class="color-item"><span data-i18n="headLabel">蛇頭</span><input type="color" id="headColor"></label>
+        <label class="color-item"><span data-i18n="bodyLabel">蛇身</span><input type="color" id="bodyColor"></label>
+        <label class="color-item"><span data-i18n="foodLabel">食物</span><input type="color" id="foodColor"></label>
+        <label class="color-item"><span data-i18n="bgLabel">背景</span><input type="color" id="bgColor"></label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="closeBtn" type="button" data-i18n="closeBtn">關閉</button>
+    </div>
+  </div>
+</div>
 
 <script>
+// ── constants ──
 const C = 400, CELL = 20, COLS = C / CELL, ROWS = C / CELL;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -111,8 +223,223 @@ const ovTitle = document.getElementById('ovTitle');
 const ovMsg   = document.getElementById('ovMsg');
 const ovScore = document.getElementById('ovScore');
 const btn     = document.getElementById('btn');
+const langSelect = document.getElementById('langSelect');
+const settingsBtn = document.getElementById('settingsBtn');
+const soundBtn    = document.getElementById('soundBtn');
+const settingsModal = document.getElementById('settingsModal');
+const closeBtn    = document.getElementById('closeBtn');
+const themeBtns   = document.getElementById('themeBtns');
+const headColor = document.getElementById('headColor');
+const bodyColor = document.getElementById('bodyColor');
+const foodColor = document.getElementById('foodColor');
+const bgColor   = document.getElementById('bgColor');
 
-let snake, dir, nextDir, food, score, high = 0, speed, timer, paused, running;
+// ── i18n ──
+const LANG_LIST = ['zh-Hant', 'en', 'ja', 'ko'];
+const I18N = {
+  'zh-Hant': {
+    title: '🐍 貪食蛇 - 經典瀏覽器遊戲',
+    desc: '經典貪食蛇遊戲！用方向鍵或 WASD 控制蛇蛇食食物、避墙壁，挑戰最高分。即玩唔需要下載。',
+    keywords: '貪食蛇, Snake game, 經典遊戲, 瀏覽器遊戲, 免費遊戲, 網頁遊戲',
+    ogTitle: '🐍 貪食蛇 - 經典瀏覽器遊戲',
+    ogDesc: '經典貪食蛇遊戲！用方向鍵或 WASD 控制蛇蛇食食物、避墙壁，挑戰最高分。即玩唔需要下載。',
+    h1: '🐍 貪食蛇 - 經典瀏覽器遊戲',
+    titleShort: '🐍 貪食蛇',
+    scoreLabel: '分數',
+    highLabel: '最高',
+    speedLabel: '速度',
+    startBtn: '開始遊戲',
+    playAgain: '再玩一次',
+    continueBtn: '繼續',
+    paused: '⏸ 暫停',
+    pressSpace: '按 Space 繼續',
+    pressEnter: '按 Enter 或撳掣開始',
+    gameOver: '💀 Game Over',
+    scoreLine: '分數：{s} ｜ 最高：{h}',
+    tip: '⬆⬇⬅➡ 方向鍵 / WASD 控制 ｜ Space 暫停 ｜ Enter 重開',
+    settingsBtn: '設定',
+    settingsTitle: '設定',
+    themeLabel: '主題',
+    colorsLabel: '顏色',
+    headLabel: '蛇頭',
+    bodyLabel: '蛇身',
+    foodLabel: '食物',
+    bgLabel: '背景',
+    closeBtn: '關閉',
+    customTheme: '自訂',
+    classicTheme: '經典',
+    neonTheme: '霓虹',
+    sunsetTheme: '日落',
+    oceanTheme: '海洋',
+    candyTheme: '糖果',
+    soundOn: '音效：開啟',
+    soundOff: '音效：靜音'
+  },
+  en: {
+    title: '🐍 Snake - Classic Browser Game',
+    desc: 'Classic Snake game! Use arrow keys or WASD to move the snake, eat food, avoid walls, and beat your high score. Play instantly, no download needed.',
+    keywords: 'Snake game, classic game, browser game, free game, web game, HTML5 game',
+    ogTitle: '🐍 Snake - Classic Browser Game',
+    ogDesc: 'Classic Snake game! Use arrow keys or WASD to move the snake, eat food, avoid walls, and beat your high score. Play instantly, no download needed.',
+    h1: '🐍 Snake - Classic Browser Game',
+    titleShort: '🐍 Snake',
+    scoreLabel: 'Score',
+    highLabel: 'Best',
+    speedLabel: 'Speed',
+    startBtn: 'Start Game',
+    playAgain: 'Play Again',
+    continueBtn: 'Continue',
+    paused: '⏸ Paused',
+    pressSpace: 'Press Space to continue',
+    pressEnter: 'Press Enter or click to start',
+    gameOver: '💀 Game Over',
+    scoreLine: 'Score: {s} ｜ Best: {h}',
+    tip: '⬆⬇⬅➡ / WASD to move ｜ Space to pause ｜ Enter to restart',
+    settingsBtn: 'Settings',
+    settingsTitle: 'Settings',
+    themeLabel: 'Theme',
+    colorsLabel: 'Colors',
+    headLabel: 'Head',
+    bodyLabel: 'Body',
+    foodLabel: 'Food',
+    bgLabel: 'Background',
+    closeBtn: 'Close',
+    customTheme: 'Custom',
+    classicTheme: 'Classic',
+    neonTheme: 'Neon',
+    sunsetTheme: 'Sunset',
+    oceanTheme: 'Ocean',
+    candyTheme: 'Candy',
+    soundOn: 'Sound: On',
+    soundOff: 'Sound: Muted'
+  },
+  ja: {
+    title: '🐍 スネーク - クラシックブラウザゲーム',
+    desc: '定番のスネークゲーム！矢印キーまたは WASD でヘビを操作し、食べ物を食べて壁を避け、ハイスコアに挑戦。ダウンロード不要で今すぐプレイ。',
+    keywords: 'スネークゲーム, へび, 定番ゲーム, ブラウザゲーム, 無料ゲーム, ウェブゲーム',
+    ogTitle: '🐍 スネーク - クラシックブラウザゲーム',
+    ogDesc: '定番のスネークゲーム！矢印キーまたは WASD でヘビを操作し、食べ物を食べて壁を避け、ハイスコアに挑戦。ダウンロード不要で今すぐプレイ。',
+    h1: '🐍 スネーク - クラシックブラウザゲーム',
+    titleShort: '🐍 スネーク',
+    scoreLabel: 'スコア',
+    highLabel: '最高記録',
+    speedLabel: '速度',
+    startBtn: 'ゲーム開始',
+    playAgain: 'もう一度遊ぶ',
+    continueBtn: '続ける',
+    paused: '⏸ 一時停止',
+    pressSpace: 'スペースキーで再開',
+    pressEnter: 'Enter キーまたはクリックで開始',
+    gameOver: '💀 ゲームオーバー',
+    scoreLine: 'スコア：{s} ｜ 最高記録：{h}',
+    tip: '⬆⬇⬅➡ / WASD で操作 ｜ Space で一時停止 ｜ Enter でリスタート',
+    settingsBtn: '設定',
+    settingsTitle: '設定',
+    themeLabel: 'テーマ',
+    colorsLabel: '色',
+    headLabel: 'ヘビの頭',
+    bodyLabel: 'ヘビの体',
+    foodLabel: '食べ物',
+    bgLabel: '背景',
+    closeBtn: '閉じる',
+    customTheme: 'カスタム',
+    classicTheme: 'クラシック',
+    neonTheme: 'ネオン',
+    sunsetTheme: 'サンセット',
+    oceanTheme: 'オーシャン',
+    candyTheme: 'キャンディ',
+    soundOn: 'サウンド：オン',
+    soundOff: 'サウンド：ミュート'
+  },
+  ko: {
+    title: '🐍 뱀 - 클래식 브라우저 게임',
+    desc: '클래식 뱀 게임! 방향키 또는 WASD로 뱀을 조종하고, 음식을 먹고, 벽을 피해 최고 점수에 도전하세요. 다운로드 없이 바로 플레이.',
+    keywords: '뱀 게임, 스네이크 게임, 클래식 게임, 브라우저 게임, 무료 게임, 웹 게임',
+    ogTitle: '🐍 뱀 - 클래식 브라우저 게임',
+    ogDesc: '클래식 뱀 게임! 방향키 또는 WASD로 뱀을 조종하고, 음식을 먹고, 벽을 피해 최고 점수에 도전하세요. 다운로드 없이 바로 플레이.',
+    h1: '🐍 뱀 - 클래식 브라우저 게임',
+    titleShort: '🐍 뱀',
+    scoreLabel: '점수',
+    highLabel: '최고',
+    speedLabel: '속도',
+    startBtn: '게임 시작',
+    playAgain: '다시 하기',
+    continueBtn: '계속',
+    paused: '⏸ 일시정지',
+    pressSpace: '스페이스바로 계속',
+    pressEnter: 'Enter 또는 클릭하여 시작',
+    gameOver: '💀 게임 오버',
+    scoreLine: '점수：{s} ｜ 최고：{h}',
+    tip: '⬆⬇⬅➡ / WASD 이동 ｜ Space 일시정지 ｜ Enter 재시작',
+    settingsBtn: '설정',
+    settingsTitle: '설정',
+    themeLabel: '테마',
+    colorsLabel: '색상',
+    headLabel: '머리',
+    bodyLabel: '몸',
+    foodLabel: '음식',
+    bgLabel: '배경',
+    closeBtn: '닫기',
+    customTheme: '사용자 지정',
+    classicTheme: '클래식',
+    neonTheme: '네온',
+    sunsetTheme: '선셋',
+    oceanTheme: '오션',
+    candyTheme: '캔디',
+    soundOn: '사운드: 켜짐',
+    soundOff: '사운드: 음소거'
+  }
+};
+
+let lang = 'zh-Hant';
+let overlayMode = 'start'; // 'start' | 'paused' | 'over'
+
+// ── themes & colors ──
+const THEMES = {
+  classic: { head: '#7fff7f', body: '#4caf50', food: '#ff4757', bg: '#12122a', label: 'classicTheme' },
+  neon:    { head: '#00e5ff', body: '#7c4dff', food: '#ff6ec7', bg: '#0d0d1a', label: 'neonTheme' },
+  sunset:  { head: '#ffd166', body: '#ff7b54', food: '#ff4d6d', bg: '#1a1220', label: 'sunsetTheme' },
+  ocean:   { head: '#7fffd4', body: '#2a9d8f', food: '#f4a261', bg: '#0a1628', label: 'oceanTheme' },
+  candy:   { head: '#ff9ff3', body: '#f368e0', food: '#feca57', bg: '#1a0f1f', label: 'candyTheme' }
+};
+const DEFAULT_COLORS = { head: '#7fff7f', body: '#4caf50', food: '#ff4757', bg: '#12122a' };
+let theme = Object.assign({}, DEFAULT_COLORS);
+let currentTheme = 'classic';
+
+// ── audio ──
+let audioCtx = null;
+let muted = localStorage.getItem('snakeMute') === '1';
+
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch (e) { return; }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function tone(f0, f1, dur, type, vol) {
+  if (muted) return;
+  ensureAudio();
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(f0, now);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(f1, 1), now + dur);
+  g.gain.setValueAtTime(vol, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + dur + 0.02);
+}
+function sfxEat() {
+  tone(540, 880, 0.09, 'square', 0.09);
+  setTimeout(() => tone(720, 1100, 0.1, 'square', 0.07), 60);
+}
+function sfxWall() { tone(220, 70, 0.3, 'sawtooth', 0.16); }
+
+// ── game state ──
+let snake, dir, nextDir, food, score, speed, timer, paused, running, high = 0;
 
 function init() {
   snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
@@ -120,10 +447,11 @@ function init() {
   score = 0; speed = 1;
   placeFood();
   updateUI();
-  paused = false; running = true;
+  paused = false; running = true; overlayMode = 'start';
   overlay.classList.add('hidden');
   clearInterval(timer);
   tick();
+  ensureAudio();
 }
 
 function placeFood() {
@@ -153,6 +481,7 @@ function step() {
 
   if (head.x===food.x && head.y===food.y) {
     score += 10;
+    sfxEat();
     if (score > high) { high = score; localStorage.setItem('snakeHigh',high); }
     // speed up every 50 pts
     const newSpeed = Math.floor(score/50)+1;
@@ -167,7 +496,7 @@ function step() {
 
 function draw() {
   // bg
-  ctx.fillStyle = '#12122a';
+  ctx.fillStyle = theme.bg;
   ctx.fillRect(0,0,C,C);
 
   // grid (subtle)
@@ -178,20 +507,26 @@ function draw() {
   }
 
   // food
-  ctx.fillStyle = '#ff4757';
+  ctx.fillStyle = theme.food;
   ctx.beginPath();
   ctx.arc(food.x*CELL+CELL/2, food.y*CELL+CELL/2, CELL/2-2, 0, Math.PI*2);
-  ctx.fill();
   // food glow
-  ctx.shadowColor = '#ff4757'; ctx.shadowBlur = 12;
+  ctx.shadowColor = theme.food; ctx.shadowBlur = 12;
   ctx.fill();
   ctx.shadowBlur = 0;
 
   // snake
+  const bc = hexToRgb(theme.body);
   snake.forEach((s,i) => {
-    const t = i / snake.length;
-    const g = Math.round(220 - t*120);
-    ctx.fillStyle = i===0 ? '#7fff7f' : `rgb(${Math.round(60-t*20)},${g},${Math.round(80-t*30)})`;
+    if (i === 0) {
+      ctx.fillStyle = theme.head;
+    } else {
+      const tt = i / snake.length;
+      const r = Math.max(0, bc.r - tt*60);
+      const g = Math.max(0, bc.g - tt*60);
+      const b = Math.max(0, bc.b - tt*60);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+    }
     const pad = i===0 ? 1 : 2;
     roundRect(s.x*CELL+pad, s.y*CELL+pad, CELL-pad*2, CELL-pad*2, i===0?5:3);
   });
@@ -204,6 +539,11 @@ function draw() {
   const px = dir.y*4, py = -dir.x*4;
   ctx.beginPath(); ctx.arc(ex+ox+px, ey+oy+py, 2, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc(ex+ox-px, ey+oy-py, 2, 0, Math.PI*2); ctx.fill();
+}
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return { r: (n>>16)&255, g: (n>>8)&255, b: n&255 };
 }
 
 function roundRect(x,y,w,h,r) {
@@ -224,13 +564,128 @@ function updateUI() {
 
 function gameOver() {
   running = false;
+  overlayMode = 'over';
   clearInterval(timer);
-  ovTitle.textContent = '💀 Game Over';
+  sfxWall();
+  ovTitle.textContent = I18N[lang].gameOver;
   ovMsg.textContent = '';
-  ovScore.textContent = `分數：${score}  ｜  最高：${high}`;
+  ovScore.textContent = I18N[lang].scoreLine.replace('{s}', score).replace('{h}', high);
   ovScore.classList.remove('hidden');
-  btn.textContent = '再玩一次';
+  btn.textContent = I18N[lang].playAgain;
   overlay.classList.remove('hidden');
+}
+
+// ── i18n apply ──
+function detectLang() {
+  const n = (navigator.language || '').toLowerCase();
+  if (n.startsWith('zh')) return 'zh-Hant';
+  if (n.startsWith('ja')) return 'ja';
+  if (n.startsWith('ko')) return 'ko';
+  return 'en';
+}
+
+function applyLang(l, save) {
+  if (!LANG_LIST.includes(l)) l = 'en';
+  lang = l;
+  const i = I18N[lang];
+  document.documentElement.lang = lang;
+  document.title = i.title;
+  document.querySelector('meta[name="description"]').setAttribute('content', i.desc);
+  document.querySelector('meta[name="keywords"]').setAttribute('content', i.keywords);
+  document.querySelector('meta[property="og:title"]').setAttribute('content', i.ogTitle);
+  document.querySelector('meta[property="og:description"]').setAttribute('content', i.ogDesc);
+  document.querySelector('meta[name="twitter:title"]').setAttribute('content', i.ogTitle);
+  document.querySelector('meta[name="twitter:description"]').setAttribute('content', i.ogDesc);
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (i[k] !== undefined) el.textContent = i[k];
+  });
+  scoreEl.setAttribute('aria-label', i.scoreLabel);
+  highEl.setAttribute('aria-label', i.highLabel);
+  speedEl.setAttribute('aria-label', i.speedLabel);
+  langSelect.value = lang;
+  // 同步覆蓋層文字（按目前狀態）
+  if (overlayMode === 'paused') {
+    ovTitle.textContent = i.paused;
+    ovMsg.textContent = i.pressSpace;
+    ovScore.classList.add('hidden');
+    btn.textContent = i.continueBtn;
+  } else if (overlayMode === 'over') {
+    ovTitle.textContent = i.gameOver;
+    ovMsg.textContent = '';
+    if (typeof score === 'number') ovScore.textContent = i.scoreLine.replace('{s}', score).replace('{h}', high);
+    ovScore.classList.remove('hidden');
+    btn.textContent = i.playAgain;
+  } else {
+    ovTitle.textContent = i.titleShort;
+    ovMsg.textContent = i.pressEnter;
+    ovScore.classList.add('hidden');
+    btn.textContent = i.startBtn;
+  }
+  updateSoundBtn();
+  renderThemeButtons();
+  if (save) localStorage.setItem('snakeLang', lang);
+}
+
+// ── theme / color helpers ──
+function saveTheme() {
+  localStorage.setItem('snakeColors', JSON.stringify(theme));
+  localStorage.setItem('snakeThemeName', currentTheme);
+}
+function syncColorInputs() {
+  headColor.value = theme.head;
+  bodyColor.value = theme.body;
+  foodColor.value = theme.food;
+  bgColor.value   = theme.bg;
+}
+function setTheme(k) {
+  if (THEMES[k]) {
+    theme = Object.assign({}, THEMES[k]);
+    currentTheme = k;
+  } else {
+    currentTheme = 'custom';
+  }
+  syncColorInputs();
+  saveTheme();
+  renderThemeButtons();
+  draw();
+}
+function bindColorInput(input, key) {
+  input.addEventListener('input', () => {
+    theme[key] = input.value;
+    currentTheme = 'custom';
+    saveTheme();
+    renderThemeButtons();
+    draw();
+  });
+}
+function renderThemeButtons() {
+  themeBtns.innerHTML = '';
+  Object.keys(THEMES).forEach(k => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'theme-btn' + (currentTheme === k ? ' active' : '');
+    b.title = I18N[lang][THEMES[k].label];
+    b.style.background = `linear-gradient(135deg, ${THEMES[k].head} 50%, ${THEMES[k].food} 50%)`;
+    b.addEventListener('click', () => setTheme(k));
+    themeBtns.appendChild(b);
+  });
+  // 自訂按鈕
+  const cb = document.createElement('button');
+  cb.type = 'button';
+  cb.className = 'theme-btn' + (currentTheme === 'custom' ? ' active' : '');
+  cb.title = I18N[lang].customTheme;
+  cb.style.background = `linear-gradient(135deg, ${theme.head} 50%, ${theme.food} 50%)`;
+  cb.style.borderColor = currentTheme === 'custom' ? '#fff' : '#555';
+  cb.addEventListener('click', () => setTheme('custom'));
+  themeBtns.appendChild(cb);
+}
+
+// ── sound button ──
+function updateSoundBtn() {
+  soundBtn.textContent = muted ? '🔇' : '🔊';
+  soundBtn.title = muted ? I18N[lang].soundOff : I18N[lang].soundOn;
+  soundBtn.setAttribute('aria-label', muted ? I18N[lang].soundOff : I18N[lang].soundOn);
 }
 
 // ── input ──
@@ -241,11 +696,23 @@ const keyMap = {
 };
 
 document.addEventListener('keydown', e => {
+  if (!settingsModal.classList.contains('hidden')) {
+    if (e.key === 'Escape') settingsModal.classList.add('hidden');
+    return;
+  }
   if (e.key === 'Enter' && !running) { init(); return; }
   if (e.key === ' ' && running) {
     paused = !paused;
-    if (paused) { ovTitle.textContent='⏸ 暫停'; ovMsg.textContent='按 Space 繼續'; ovScore.classList.add('hidden'); btn.textContent='繼續'; overlay.classList.remove('hidden'); }
-    else overlay.classList.add('hidden');
+    if (paused) {
+      overlayMode = 'paused';
+      ovTitle.textContent = I18N[lang].paused;
+      ovMsg.textContent = I18N[lang].pressSpace;
+      ovScore.classList.add('hidden');
+      btn.textContent = I18N[lang].continueBtn;
+      overlay.classList.remove('hidden');
+    } else {
+      overlay.classList.add('hidden');
+    }
     e.preventDefault(); return;
   }
   if (!running) return;
@@ -261,6 +728,23 @@ btn.addEventListener('click', () => {
   if (paused) { paused=false; overlay.classList.add('hidden'); }
   else init();
 });
+
+// ── settings UI ──
+settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+closeBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+settingsModal.addEventListener('click', e => {
+  if (e.target === settingsModal) settingsModal.classList.add('hidden');
+});
+langSelect.addEventListener('change', e => applyLang(e.target.value, true));
+soundBtn.addEventListener('click', () => {
+  muted = !muted;
+  localStorage.setItem('snakeMute', muted ? '1' : '0');
+  updateSoundBtn();
+});
+bindColorInput(headColor, 'head');
+bindColorInput(bodyColor, 'body');
+bindColorInput(foodColor, 'food');
+bindColorInput(bgColor, 'bg');
 
 // ── mobile touch controls ──
 let touchStartX = 0, touchStartY = 0;
@@ -308,7 +792,22 @@ document.addEventListener('touchend', e => {
   if (newDir.x !== -dir.x || newDir.y !== -dir.y) nextDir = newDir;
 }, { passive: true });
 
-// load high score
+// ── load saved settings & initialise ──
+const savedColors = JSON.parse(localStorage.getItem('snakeColors') || 'null');
+if (savedColors) theme = Object.assign({}, DEFAULT_COLORS, savedColors);
+currentTheme = localStorage.getItem('snakeThemeName') || 'classic';
+if (!THEMES[currentTheme]) currentTheme = 'classic';
+if (currentTheme !== 'custom' && THEMES[currentTheme]) theme = Object.assign({}, theme, THEMES[currentTheme]);
+muted = localStorage.getItem('snakeMute') === '1';
+syncColorInputs();
+
+const qLang = new URLSearchParams(location.search).get('lang');
+const storedLang = localStorage.getItem('snakeLang');
+let initLang = storedLang || detectLang();
+if (qLang && LANG_LIST.includes(qLang)) initLang = qLang;
+applyLang(initLang, !qLang);
+
+// high score
 high = parseInt(localStorage.getItem('snakeHigh')) || 0;
 highEl.textContent = high;
 
@@ -316,6 +815,7 @@ highEl.textContent = high;
 snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
 dir = {x:1,y:0}; nextDir = {x:1,y:0};
 food = {x:15,y:10}; score=0; speed=1;
+overlayMode = 'start';
 updateUI(); draw();
 </script>
 </body>
